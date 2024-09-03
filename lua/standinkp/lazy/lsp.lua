@@ -13,6 +13,7 @@ return {
     'rafamadriz/friendly-snippets',
     'j-hui/fidget.nvim',
   },
+  event = 'BufReadPre',
   config = function(event)
     local cmp = require 'cmp'
     local cmp_lsp = require 'cmp_nvim_lsp'
@@ -49,11 +50,51 @@ return {
             },
           }
         end,
+        ['rust_analyzer'] = function()
+          local lspconfig = require 'lspconfig'
+          lspconfig.rust_analyzer.setup {
+            capabilities = capabilities,
+            filetypes = { 'rust' },
+            root_dir = lspconfig.util.root_pattern('Cargo.toml', 'rust-project.json'),
+            settings = {
+              ['rust-analyzer'] = {
+                cargo = {
+                  allFeatures = true,
+                },
+              },
+            },
+          }
+        end,
       },
     }
-
     local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
+    local kind_icons = {
+      Text = '',
+      Method = '󰆧',
+      Function = '󰊕',
+      Constructor = '',
+      Field = '󰇽',
+      Variable = '󰂡',
+      Class = '󰠱',
+      Interface = '',
+      Module = '',
+      Property = '󰜢',
+      Unit = '',
+      Value = '󰎠',
+      Enum = '',
+      Keyword = '󰌋',
+      Snippet = '',
+      Color = '󰏘',
+      File = '󰈙',
+      Reference = '',
+      Folder = '󰉋',
+      EnumMember = '',
+      Constant = '󰏿',
+      Struct = '',
+      Event = '',
+      Operator = '󰆕',
+      TypeParameter = '󰅲',
+    }
     cmp.setup {
       snippet = {
         expand = function(args)
@@ -72,13 +113,25 @@ return {
       },
       sources = cmp.config.sources {
         { name = 'nvim_lsp' }, -- lsp
+        { name = 'path', max_item_count = 7 }, -- file system paths
         { name = 'buffer' }, -- text within current buffer
         { name = 'copilot' }, -- Copilot suggestions
-        { name = 'path', max_item_count = 3 }, -- file system paths
-        { name = 'luasnip', max_item_count = 3 }, -- snippets
+        { name = 'luasnip', max_item_count = 5 }, -- snippets
       },
       formatting = {
-        expandable_indicator = true,
+        format = function(entry, vim_item)
+          -- Kind icons
+          vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind) -- This concatenates the icons with the name of the item kind
+          -- Source
+          vim_item.menu = ({
+            buffer = '[Buffer]',
+            nvim_lsp = '[LSP]',
+            luasnip = '[LuaSnip]',
+            nvim_lua = '[Lua]',
+            latex_symbols = '[LaTeX]',
+          })[entry.source.name]
+          return vim_item
+        end,
       },
     }
 

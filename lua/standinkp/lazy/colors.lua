@@ -10,7 +10,7 @@ return {
     'folke/tokyonight.nvim',
     lazy = false,
     priority = 1000,
-    init = function()
+    config = function()
       require('tokyonight').setup {
         -- your configuration comes here
         -- or leave it empty to use the default settings
